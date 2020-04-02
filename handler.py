@@ -50,7 +50,8 @@ def update_data(event, context):
     data.loc[data['Type'] == 'Deaths_percentage', 'Type'] = 'Deaths'
     data.loc[data['Type'] == 'Recoveries_percentage', 'Type'] = 'Recovered'
 
-    population = pd.read_csv('population.csv').drop(columns=['Alpha2', 'Alpha3', 'Longitude', 'Latitude'])
+    population = pd.read_csv('https://raw.githubusercontent.com/victcebesp/covid-19-data-updater/master/population.csv') \
+                   .drop(columns=['Alpha2', 'Alpha3', 'Longitude', 'Latitude'])
     data = data.merge(population, left_on='Country', right_on='Name')
     data.loc[:, 'RelativeConfirmations'] = data['Deaths'] / (data['Population2020'] * 1000)
 
@@ -67,6 +68,9 @@ def update_data(event, context):
 
     more_representative_countries_all_days.to_csv('s3://covid-visualization-data/representative.csv', index=False)
 
+    return {
+        "statusCode": 200
+    }
 
 if __name__ == "__main__":
-    main('', '')
+    update_data('', '')
