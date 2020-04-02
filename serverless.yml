@@ -1,0 +1,16 @@
+service: covid-19-data-updater
+
+provider:
+  name: aws
+  runtime: python3.6
+
+functions:
+  update_covid_data:
+    handler: handler.update_data
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
