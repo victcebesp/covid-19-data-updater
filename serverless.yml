@@ -7,6 +7,11 @@ provider:
 functions:
   update_covid_data:
     handler: handler.update_data
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+        Resource: "arn:aws:s3:::covid-visualization-data/*"
 
 plugins:
   - serverless-python-requirements
