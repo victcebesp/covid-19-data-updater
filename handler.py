@@ -1,7 +1,23 @@
-import datetime
-import time
-
 import pandas as pd
+from boto3.s3.transfer import S3Transfer
+import boto3
+
+def group_by_country(dataframe):
+    return dataframe.groupby(['Country/Region']).sum().reset_index()
+
+def melt_dataframe_per_day(dataframe, column_name, days):
+    melted = pd.melt(dataframe, id_vars=['Country/Region'], value_vars=days)
+    melted.columns = ['Country', 'Day', column_name]
+    return melted
+
+def encode_day(each_day):
+    month = each_day.split('/')[0]
+    day = each_day.split('/')[1]
+    day = '0' + day if len(day) == 1 else day
+    return int(month + day)
+
+def get_selection_id(each_day, transformed_dates):
+    return transformed_dates.loc[encode_day(each_day), 'selection_id']
 
 def update_data(event, context):
     raw_data_confirmed = pd.read_csv(
@@ -11,27 +27,20 @@ def update_data(event, context):
     raw_data_recovered = pd.read_csv(
         'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
 
-    def group_by_country(dataframe):
-        return dataframe.groupby(['Country/Region']).sum().reset_index()
-
     grouped_confirmations = group_by_country(raw_data_confirmed)
     grouped_deaths = group_by_country(raw_data_deaths)
     grouped_recovered = group_by_country(raw_data_recovered)
 
     days = list(filter(lambda x: '/20' in x, grouped_deaths.columns))
 
-    def melt_dataframe_per_day(dataframe, column_name):
-        melted = pd.melt(dataframe, id_vars=['Country/Region'], value_vars=days)
-        melted.columns = ['Country', 'Day', column_name]
-        return melted
-
-    melted_confirmations = melt_dataframe_per_day(grouped_confirmations, 'Confirmations')
-    melted_deaths = melt_dataframe_per_day(grouped_deaths, 'Deaths')
-    melted_recovered = melt_dataframe_per_day(grouped_recovered, 'Recoveries')
+    melted_confirmations = melt_dataframe_per_day(grouped_confirmations, 'Confirmations', days)
+    melted_deaths = melt_dataframe_per_day(grouped_deaths, 'Deaths', days)
+    melted_recovered = melt_dataframe_per_day(grouped_recovered, 'Recoveries', days)
 
     data = melted_confirmations.merge(melted_deaths, on=['Country', 'Day'])
     data = data.merge(melted_recovered, on=['Country', 'Day'])
 
+    data.loc[:, 'Confirmations'] = data.Confirmations - data.Deaths - data.Recoveries
     data.loc[:, 'Total'] = data.Confirmations + data.Deaths + data.Recoveries
     data.loc[:, 'Confirmations_percentage'] = data.Confirmations / data.Total
     data.loc[:, 'Deaths_percentage'] = data.Deaths / data.Total
