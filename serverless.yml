@@ -7,11 +7,14 @@ provider:
 functions:
   update_covid_data:
     handler: handler.update_data
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - s3:PutObject
-        Resource: "arn:aws:s3:::covid-visualization-data/*"
+
+  get_maximum_values:
+    handler: maximumEncodedDayHandler.get_maximum_values
+    events:
+      - http:
+          path: get_maximum_values
+          method: get
+          cors: true
 
 plugins:
   - serverless-python-requirements
