@@ -79,6 +79,9 @@ def update_data(event, context):
 
     more_representative_countries_all_days.to_csv('s3://covid-visualization/representative.csv', index=False)
 
+    client = boto3.client('s3')
+    transfer = S3Transfer(client)
+    client.put_object_acl(ACL='public-read', Bucket='covid-visualization', Key="representative.csv")
 
     return {
         "statusCode": 200
