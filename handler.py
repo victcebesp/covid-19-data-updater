@@ -64,14 +64,16 @@ def update_data(event, context):
     data = data.merge(population, left_on='Country', right_on='Name')
     data.loc[:, 'RelativeConfirmations'] = data['Deaths'] / (data['Population2020'] * 1000)
 
-    def get_unix_timestamp(string):
-        return time.mktime(datetime.datetime.strptime(string, "%m/%d/%y").timetuple())
-
-    data.loc[:, 'UnixTimeStamp'] = data['Day'].apply(get_unix_timestamp)
-
     more_representative_countries = list(
         data.sort_values(['RelativeConfirmations'], ascending=False)['Country'].unique()[0:15])
     more_representative_countries.append('China')
+
+    transformed_dates = [encode_day(each_day) for each_day in data.Day]
+    transformed_dates = pd.DataFrame(pd.Series(transformed_dates).unique()).reset_index()
+    transformed_dates.columns = ['selection_id', 'encoded_day']
+    transformed_dates = transformed_dates.set_index('encoded_day')
+
+    data.loc[:, 'EncodedDay'] = data['Day'].apply(lambda x: get_selection_id(x, transformed_dates))
 
     more_representative_countries_all_days = data[data['Country'].isin(more_representative_countries)]
 
