@@ -77,7 +77,8 @@ def update_data(event, context):
 
     more_representative_countries_all_days = data[data['Country'].isin(more_representative_countries)]
 
-    more_representative_countries_all_days.to_csv('s3://covid-visualization-data/representative.csv', index=False)
+    more_representative_countries_all_days.to_csv('s3://covid-visualization/representative.csv', index=False)
+
 
     return {
         "statusCode": 200
