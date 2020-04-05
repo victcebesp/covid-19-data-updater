@@ -2,7 +2,7 @@ import pandas as pd
 import json
 
 def get_maximum_values(event, context):
-    data = pd.read_csv('s3://covid-visualization/representative.csv')
+    data = pd.read_csv('s3://therealgraphs.com/representative.csv')
     maximum_encoded_day = data['EncodedDay'].max()
     maximum_confirmed_cases = data['Confirmations'].max()
     return {
