@@ -40,32 +40,29 @@ def update_data(event, context):
     data = melted_confirmations.merge(melted_deaths, on=['Country', 'Day'])
     data = data.merge(melted_recovered, on=['Country', 'Day'])
 
-    data.loc[:, 'Confirmations'] = data.Confirmations - data.Deaths - data.Recoveries
-    data.loc[:, 'Total'] = data.Confirmations + data.Deaths + data.Recoveries
-    data.loc[:, 'Confirmations_percentage'] = data.Confirmations / data.Total
-    data.loc[:, 'Deaths_percentage'] = data.Deaths / data.Total
-    data.loc[:, 'Recoveries_percentage'] = data.Recoveries / data.Total
+    data.loc[:, 'Active_cases'] = data.Confirmations - data.Deaths - data.Recoveries
+    data.loc[:, 'Active_percentage'] = data.Active_cases / data.Confirmations
+    data.loc[:, 'Deaths_percentage'] = data.Deaths / data.Confirmations
+    data.loc[:, 'Recoveries_percentage'] = data.Recoveries / data.Confirmations
     data = data.fillna(0)
     data.loc[data['Country'] == 'Korea, South', 'Country'] = 'South Korea'
 
-    data = pd.melt(data, id_vars=['Country', 'Day', 'Confirmations', 'Deaths', 'Recoveries', 'Total'],
-                   value_vars=['Confirmations_percentage', 'Deaths_percentage',
+    data = pd.melt(data, id_vars=['Country', 'Day', 'Confirmations', 'Deaths', 'Recoveries', 'Active_cases'],
+                   value_vars=['Active_percentage', 'Deaths_percentage',
                                'Recoveries_percentage'])
 
-    data.columns = ['Country', 'Day', 'Confirmations', 'Deaths', 'Recoveries', 'Total',
-                    'Type', 'Percentage']
-
-    data.loc[data['Type'] == 'Confirmations_percentage', 'Type'] = 'Confirmed'
+    data.columns = ['Country', 'Day', 'Confirmations', 'Deaths', 'Recoveries', 'Active', 'Type', 'Percentage']
+    data.loc[data['Type'] == 'Active_percentage', 'Type'] = 'Active'
     data.loc[data['Type'] == 'Deaths_percentage', 'Type'] = 'Deaths'
     data.loc[data['Type'] == 'Recoveries_percentage', 'Type'] = 'Recovered'
 
     population = pd.read_csv('https://raw.githubusercontent.com/victcebesp/covid-19-data-updater/master/population.csv') \
                    .drop(columns=['Alpha2', 'Alpha3', 'Longitude', 'Latitude'])
     data = data.merge(population, left_on='Country', right_on='Name')
-    data.loc[:, 'RelativeConfirmations'] = data['Deaths'] / (data['Population2020'] * 1000)
+    data.loc[:, 'RelativeDeaths'] = data['Deaths'] / (data['Population2020'] * 1000)
 
     more_representative_countries = list(
-        data.sort_values(['RelativeConfirmations'], ascending=False)['Country'].unique()[0:15])
+        data.sort_values(['RelativeDeaths'], ascending=False)['Country'].unique()[0:15])
     more_representative_countries.append('China')
 
     transformed_dates = [encode_day(each_day) for each_day in data.Day]

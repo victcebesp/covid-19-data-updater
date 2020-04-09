@@ -4,7 +4,7 @@ import json
 def get_maximum_values(event, context):
     data = pd.read_csv('s3://therealgraphs.com/representative.csv')
     maximum_encoded_day = data['EncodedDay'].max()
-    maximum_confirmed_cases = data['Confirmations'].max()
+    maximum_active_cases = data['Active'].max()
     return {
         "statusCode": 200,
         "headers": {
@@ -13,7 +13,7 @@ def get_maximum_values(event, context):
         },
         'body': json.dumps({
                                 "maximum_encoded_day": str(maximum_encoded_day),
-                                "maximum_confirmed_cases": str(maximum_confirmed_cases)
+                                "maximum_active_cases": str(maximum_active_cases)
                            })
     }
 
